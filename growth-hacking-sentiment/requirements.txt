@@ -1,0 +1,4 @@
+altair==4.1.0
+ndjson==0.3.1
+pandas==1.1.5
+imbalanced-learn==0.12.0
