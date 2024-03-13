@@ -40,13 +40,14 @@ def create_chart(df: pd.DataFrame, filename: str):
 def load_data_frame() -> pd.DataFrame:
     # Pandas now supports NDJson out of the box
     df = pd.read_json(data_path, orient='records', lines=True)
+    df = df[['reviewText', 'overall']]
+    df = df.dropna()
     create_chart(df, original_chart)
     return df
 
 
 def corpus_to_csv(df: pd.DataFrame, filename: str):
-    df = df[['reviewText', 'overall']]
-    df = df.rename({'reviewText': 'reviews', 'overall': 'ratings'})
+    df = df.rename(columns={'reviewText': 'reviews', 'overall': 'ratings'})
     df.to_csv(filename, index=False)
 
 
