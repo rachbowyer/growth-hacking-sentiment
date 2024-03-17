@@ -11,7 +11,7 @@ data_path = f'{data_root}/Video_Games_5.json'
 small_corpus = f'{data_root}/small_corpus.csv'
 large_corpus = f'{data_root}/large_corpus.csv'
 
-chart_root = '../charts'
+chart_root = '../charts/part-1'
 original_chart = f'{chart_root}/chart.html'
 small_chart = f'{chart_root}/small_chart.html'
 large_chart = f'{chart_root}/large_chart.html'
