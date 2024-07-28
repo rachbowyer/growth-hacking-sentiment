@@ -272,7 +272,7 @@ def main():
 
     load_ds_and_score(df, handle_negation=False)
     df = load_ds_and_score(df, handle_negation=True)
-    save_corpus(df, small_corpus_scored)
+    # save_corpus(df, small_corpus_scored)
 
 
 if __name__ == "__main__":

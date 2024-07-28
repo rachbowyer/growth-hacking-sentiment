@@ -27,7 +27,8 @@ def accuracy_precision_recall(y_true, y_pred):
     # precision - for a given score class, percentage of correctly classified reviews
     # Important if the costs of a false positive (e.g spam) are high
 
-    # recall - for given ratings class, percentage of correctly classified reviews
+    # recall - for given ratings class (the ground truth), percentage of correctly
+    # classified reviews
     # Important if the costs of a false negative (e.g fraud, disease) are high
 
     # f1 score - harmonic mean of precision and recall
@@ -69,6 +70,29 @@ def main():
     # Those that are classified positive are generally positive
     # But most reviews have been classified as neutral, even many
     # that were positive os negative
+
+
+# /Users/rachelbowyer/miniconda3/envs/growth-hacking-env/bin/python /Users/rachelbowyer/Library/Mobile Documents/com~apple~CloudDocs/Mathematics and technology/growth-hacking-sentiment/growth-hacking-sentiment/part-3/evaluating-dictionary-based-analyzer.py
+# Accuracy score: 0.39
+# Precision score: 0.64
+# Recall score: 0.39
+#
+#               precision    recall  f1-score   support
+#
+#     negative       0.75      0.03      0.06      1500
+#      neutral       0.35      0.95      0.51      1500
+#     positive       0.81      0.20      0.32      1500
+#
+#     accuracy                           0.39      4500
+#    macro avg       0.64      0.39      0.30      4500
+# weighted avg       0.64      0.39      0.30      4500
+#
+# Confusion matrix
+# [[  49 1442    9]
+#  [  16 1421   63]
+#  [   0 1201  299]]
+#
+# Process finished with exit code 0
 
 
 
