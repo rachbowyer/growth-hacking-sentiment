@@ -1,4 +1,5 @@
 import altair as alt
+import csv
 import nltk
 from nltk.corpus import opinion_lexicon
 from nltk.sentiment import util
@@ -20,9 +21,6 @@ ratings_score_correlation = f'{chart_root}/ratings_score_correlation.html'
 ratings_score_correlation_no_negation = f'{chart_root}/ratings_score_correlation_no_negation.html'
 
 
-negative_words = set(opinion_lexicon.negative())
-positive_words = set(opinion_lexicon.positive())
-
 alt.data_transformers.disable_max_rows()
 
 
@@ -31,7 +29,7 @@ def load_datasets():
     nltk.download('punkt')
 
 
-def score_sentence(sentence, handle_negation):
+def score_sentence(sentence, handle_negation, negative_words, positive_words):
     sentence_tokenised = nltk.tokenize.word_tokenize(sentence)
     if handle_negation:
         sentence_tokenised = util.mark_negation(sentence_tokenised, shallow=True)
@@ -47,11 +45,11 @@ def score_sentence(sentence, handle_negation):
     return score / len(sentence_tokenised) if len(sentence_tokenised) != 0 else 0
 
 
-def score_review(review, handle_negation):
+def score_review(review, negative_words, positive_words, handle_negation):
     tokenised = nltk.tokenize.sent_tokenize(review)
     score = 0.0
     for sentence in tokenised:
-        score += score_sentence(sentence, handle_negation)
+        score += score_sentence(sentence, handle_negation, negative_words, positive_words)
     return score / len(tokenised)
 
 
@@ -105,7 +103,7 @@ def print_contingency_table(contingency_table):
     print()
     print("Contingency table")
     print()
-    print(f'Score   ', end='')
+    print('Score   ', end='')
     for score_bucket in range(5):
         print(f'{score_bucket:>{5}} ', end='')
     print()
@@ -169,9 +167,9 @@ def print_contingency_table_stats(ct_stats, rho):
     print(f'Rho: {rho}')
 
 
-def load_ds_and_score(df, handle_negation):
+def load_ds_and_score(df, negative_words, positive_words, handle_negation):
     df = df.copy(deep=True)
-    df['score'] = df.apply(lambda row: score_review(row['reviews'], handle_negation), axis=1)
+    df['score'] = df.apply(lambda row: score_review(row['reviews'], negative_words, positive_words, handle_negation), axis=1)
     bucket_sizes = calculate_ratings_bucket_sizes(df)
     add_score_buckets(df, bucket_sizes)
 
@@ -243,9 +241,9 @@ def load_ds_and_score(df, handle_negation):
 
 
 def save_corpus(df, filename):
-    df.to_csv(filename, index=False)
+    df.to_csv(filename, index=False, quoting=csv.QUOTE_ALL)
 
-def worst_offenders():
+def worst_offenders(negative_words, positive_words):
     # s = "A brand new huge open world to explore and the entire world from the first game with new enemies and a new outlook on the worlds around Gravity Rush."
     # enemies makes it negative
 
@@ -262,23 +260,23 @@ def worst_offenders():
     s = "Item arrived on time with no issues!"
     # Issues negative, negation not picked up
 
-    print(score_review(s, handle_negation=False))
+    print(score_review(s, negative_words, positive_words, handle_negation=False))
 
 
-def main():
-    # load_datasets()
-    df = pd.read_csv(small_corpus)
+def main(negative_words, positive_words):
+    df = pd.read_csv(small_corpus, quoting=csv.QUOTE_ALL, keep_default_na=False)
     chart_ratings_distribution(df)
-
-    load_ds_and_score(df, handle_negation=False)
-    df = load_ds_and_score(df, handle_negation=True)
-    # save_corpus(df, small_corpus_scored)
+    df = load_ds_and_score(df, negative_words, positive_words, handle_negation=True)
+    save_corpus(df, small_corpus_scored)
 
 
 if __name__ == "__main__":
-    main()
-    # worst_offenders()
+    # load_datasets()
+    negative_words = set(opinion_lexicon.negative())
+    positive_words = set(opinion_lexicon.positive())
+    main(negative_words, positive_words)
+    # worst_offenders(negative_words, positive_words)
 
 
-
-
+# First run with load_datasets commented in to download the dictionaries
+# After the first run it can be commented out to save time

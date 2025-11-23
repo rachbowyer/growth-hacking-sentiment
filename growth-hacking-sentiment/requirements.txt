@@ -1,12 +1,8 @@
-altair==4.1.0
+altair==5.5.0
 ndjson==0.3.1
-pandas==1.1.5
-imbalanced-learn==0.12.0
+imbalanced-learn==0.14.0
 matplotlib==3.8.3
 nltk==3.8.1
-scipy==1.12.0
-simpletransformers==0.70.0
-torch==2.2.1
-torchvision==0.17.1
-torchaudio==2.2.1
-transformers==4.39.1
+simpletransformers==0.70.5
+torchaudio==2.8.0
+transformers==4.57.1

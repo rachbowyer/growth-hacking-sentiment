@@ -1,4 +1,5 @@
 import altair as alt
+import csv
 from imblearn.under_sampling import RandomUnderSampler
 import pandas as pd
 import numpy as np
@@ -33,6 +34,7 @@ alt.data_transformers.disable_max_rows()
 
 
 def create_chart(df: pd.DataFrame, filename: str):
+    print(f'Saving chart to file: {filename}')
     chart = alt.Chart(df).mark_bar().encode(x='overall', y='count()')
     chart.save(filename)
 
@@ -48,7 +50,12 @@ def load_data_frame() -> pd.DataFrame:
 
 def corpus_to_csv(df: pd.DataFrame, filename: str):
     df = df.rename(columns={'reviewText': 'reviews', 'overall': 'ratings'})
-    df.to_csv(filename, index=False)
+    df.to_csv(filename, index=False, quoting=csv.QUOTE_ALL)
+
+    # Validate that integrity of the data is preserved
+    review_df = pd.read_csv(filename, quoting=csv.QUOTE_ALL, keep_default_na=False)
+    review_df = review_df.dropna()
+    assert len(df) == len(review_df)
 
 
 def create_small_data_frame(df):

@@ -1,0 +1,58 @@
+[project]
+name = "growth-hacking-sentiment"
+version = "1.0.0"
+description = "Sentiment Analysis and Natural Language Processing for Marketing - A Manning Live Project"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [
+    {name = "Rachel Bowyer", email = "rachbowyer@gmail.com"}
+]
+keywords = ["sentiment-analysis", "nlp", "machine-learning", "bert", "transformers"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/rachbowyer/growth-hacking-sentiment"
+Repository = "https://github.com/rachbowyer/growth-hacking-sentiment"
+"Live Project" = "https://www.manning.com/liveproject/sentiment-analysis-and-natural-language-processing-for-marketing"
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+  | outputs
+  | models
+  | charts
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Project-specific configuration
+[tool.growth-hacking-sentiment]
+random_seed = 42
+large_dataset_size = 100000
+data_dir = "growth-hacking-sentiment/data"
+charts_dir = "growth-hacking-sentiment/charts"

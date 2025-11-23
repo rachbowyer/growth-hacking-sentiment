@@ -1,22 +1,35 @@
+import csv
 import functools
 import platform
 import time
+import warnings
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from simpletransformers.classification import ClassificationModel
 from simpletransformers.language_modeling import LanguageModelingModel
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
 import torch
 from transformers import pipeline
 
+# Suppress specific transformers warnings
+warnings.filterwarnings('ignore', message='.*were not initialized from the model checkpoint.*')
+warnings.filterwarnings('ignore', message='.*TRAIN this model on a down-stream task.*')
+
 data_root = '../data'
 small_corpus = f'{data_root}/small_corpus.csv'
-train_txt = f'{data_root}/train.txt'
-test_txt = f'{data_root}/test.txt'
+LARGE_CORPUS = f'{data_root}/large_corpus.csv'
+TRAIN_TXT = f'{data_root}/train.txt'
+# TEST_TXT = f'{data_root}/test.txt'
+EVAL_TXT = f'{data_root}/eval.txt'
 
 labels = ['negative', 'neutral', 'positive']
+
+
+BATCH_SIZE = 128
+MAX_SEQ_LEN = 512
+
 
 RANDOM_SEED = 42
 
@@ -50,6 +63,7 @@ def accuracy_precision_recall(y_true, y_pred):
     print(f'Accuracy score: {accuracy_score(y_true, y_pred):.2f}')
     print(f'Precision score: {precision_score(y_true, y_pred, average="weighted"):.2f}')
     print(f'Recall score: {recall_score(y_true, y_pred, average="weighted"):.2f}')
+    print(f'F1 score: {f1_score(y_true, y_pred, average="weighted"):.2f}')
     print()
 
 
@@ -90,11 +104,13 @@ def timer(func):
 def eval_model1(df, device):
     df = df.copy(deep=True)
     model = pipeline(model='distilbert/distilbert-base-uncased-finetuned-sst-2-english',
-                     device=device)
+                     device=device, batch_size=BATCH_SIZE)  # Add batch_size parameter
     print("Processing reviews...")
-    df['score'] = df.apply(lambda row: model_to_classification(
-        model(row['reviews'][:512]), 0.998, 0.94
-    ), axis=1)
+    reviews_truncated = [review[:MAX_SEQ_LEN] for review in df['reviews']]
+    results = model(reviews_truncated)
+
+    # Apply classification thresholds
+    df['score'] = [model_to_classification([result], 0.998, 0.94) for result in results]
 
     evaluate_model(df)
 
@@ -125,7 +141,7 @@ LABEL_TO_RATING_CLASSES = {0: 'negative', 1: 'neutral', 2: 'positive'}
 
 
 @timer
-def create_model2(train_df):
+def create_model2(train_df, use_cuda):
     train_df = train_df.copy(deep=True)
     train_df = train_df.rename(columns={'reviews': 'text'})
     train_df['labels'] = train_df['ratings_class'].apply(lambda x: RATINGS_CLASS_TO_LABEL[x])
@@ -135,19 +151,23 @@ def create_model2(train_df):
     # 'max_seq_length': 512,
     # 'sliding_window': True,n
     model = ClassificationModel("roberta", "roberta-base",
-                                num_labels=3, use_cuda=False,
-                                args={'num_train_epochs': 1, 'best_model_dir': 'models/', 'max_seq_length': 512,
-                                      'overwrite_output_dir': True, 'sliding_window': True,
-                                      'evaluate_during_training': False, 'train_batch_size': 20, 'eval_batch_size': 20})
+                                num_labels=3, use_cuda=use_cuda,
+                                args={'num_train_epochs': 1,
+                                      'best_model_dir': 'models/',
+                                      'max_seq_length': MAX_SEQ_LEN,
+                                      'overwrite_output_dir': True,
+                                      'sliding_window': True,  # Process long reviews in 512-token windows
+                                      'train_batch_size': 20,  # Balance between speed and memory usage
+                                })  # Disable mixed precision to avoid deprecated warnings
 
     model.train_model(train_df, output_dir='models/')
 
 
 @timer
-def eval_model_2(test_df):
+def eval_model_2(test_df, use_cuda):
     test_df = test_df.copy(deep=True)
     # roberta
-    model = ClassificationModel('roberta', 'outputs/', num_labels=3, use_cuda=False)
+    model = ClassificationModel('roberta', 'outputs/', num_labels=3, use_cuda=use_cuda)
 
     print("Processing reviews...")
     predictions, _ = model.predict(test_df['reviews'].to_list())
@@ -165,20 +185,24 @@ def create_file(reviews, filename):
 
 
 @timer
-def create_model3(train_df, test_df):
+def create_model3(train_df, use_cuda):
     train_df = train_df.copy(deep=True)
 
     # Fine tune the model
-    model = LanguageModelingModel('roberta', 'roberta-base', use_cuda=False,
+    model = LanguageModelingModel('roberta', 'roberta-base', use_cuda=use_cuda,
                                   args={'num_train_epochs': 1,
                                         'overwrite_output_dir': True, 'sliding_window': True,
                                         'output_dir': 'outputs/', 'best_model_dir': 'best_model',
                                         'max_seq_length': 512})
-    model.train_model(train_txt)
+    model.train_model(TRAIN_TXT)
+
+    # result, _, _ = model.eval_model(EVAL_TXT)
+    # print(f"Eval loss: {result['eval_loss']:.4f}, Perplexity: {result['perplexity']:.4f}")
+
 
     # Train the classifier
     model = ClassificationModel("roberta", 'outputs/',
-                                num_labels=3, use_cuda=False,
+                                num_labels=3, use_cuda=use_cuda,
                                 args={'num_train_epochs': 1, 'best_model_dir': 'models/', 'max_seq_length': 512,
                                       'overwrite_output_dir': True, 'sliding_window': True,
                                       'evaluate_during_training': False, 'train_batch_size': 20, 'eval_batch_size': 20})
@@ -189,10 +213,10 @@ def create_model3(train_df, test_df):
     model.train_model(train_df)
 
 
-def eval_model_3(test_df):
+def eval_model_3(test_df, use_cuda):
     test_df = test_df.copy(deep=True)
     # roberta
-    model = ClassificationModel('roberta', 'outputs/', num_labels=3, use_cuda=False)
+    model = ClassificationModel('roberta', 'outputs/', num_labels=3, use_cuda=use_cuda)
 
     print("Processing reviews...")
     predictions, _ = model.predict(test_df['reviews'].to_list())
@@ -285,28 +309,51 @@ def eval_model_3(test_df):
 #  [ 10  77 663]]
 
 
+def create_reviews_as_txt_file(df, filename):
+    df = list(df["reviews"])
+    reviews = [r.strip() for r in df]
+    create_file(reviews, filename)
+
 
 def main():
     print(platform.processor())
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    use_cuda = torch.cuda.is_available()
+    device = torch.device(
+        "cuda" if use_cuda else
+        "mps" if torch.backends.mps.is_available() else
+        "cpu"
+    )
+    # device = "cpu"
     print(f"Using device: {device}")
 
-    df = pd.read_csv(small_corpus)
-    print(f"Number of elements: {len(df)}")
-    add_ratings_class(df)
+    small_corpus_df = pd.read_csv(small_corpus, quoting=csv.QUOTE_ALL, keep_default_na=False)
+    print(f"Number of elements: {len(small_corpus_df)}")
+    add_ratings_class(small_corpus_df)
 
-    train_df, test_df = train_test_split(df, test_size=0.5, random_state=RANDOM_SEED,
-                                         stratify=df['ratings_class'])
-    # Load large corpus and prep it
-    print(f'Size of the test set: {len(train_df)}')
+    train_df, test_df = train_test_split(small_corpus_df, test_size=0.5, random_state=RANDOM_SEED,
+                                         stratify=small_corpus_df['ratings_class'])
+    
 
-    # create_model3(train_df, test_df)
-    # eval_model_3(test_df)
+    large_corpus_df = pd.read_csv(LARGE_CORPUS, quoting=csv.QUOTE_ALL, keep_default_na=False)
+    eval_df = large_corpus_df.sample(n=100, random_state=RANDOM_SEED)
 
-    # eval_model1(df, device)
+    create_reviews_as_txt_file(train_df, TRAIN_TXT)
+    # create_reviews_as_txt_file(test_df, TEST_TXT)
+    create_reviews_as_txt_file(eval_df, EVAL_TXT)
 
-    # create_model2(train_df)
-    # eval_model_2(test_df)
+
+    print(f'Size of the train set: {len(train_df)}')
+    print(f'Size of the test set: {len(test_df)}')
+    print(f'Size of the eval set: {len(eval_df)}')
+  
+    eval_model1(test_df, device)
+
+    # create_model2(train_df, use_cuda)
+    # eval_model_2(test_df, use_cuda)
+
+    # create_model3(train_df, use_cuda)
+    # eval_model_3(test_df, use_cuda)
+
 
     print("Finished processing reviews.")
 
@@ -314,15 +361,19 @@ def main():
 if __name__ == "__main__":
     main()
 
-# Fine-tuned Roberta model
-# and trained classifier
 
+# eval_model1
+# Evaluates an out of the box Hugging Faces Distilbert based classifer
 
-# Accuracy score: 0.75
-# Precision score: 0.75
-# Recall score: 0.75
-#
-# Confusion matrix
-# [[658  71  21]
-#  [210 375 165]
-#  [ 10  77 663]]
+# create_model2
+# trains a classification head ontop of the stock RoBERTa model
+
+# eval_model_2
+# Evaluates the second model
+
+# create_model_3
+# Firstly, fine tunes RoBERTa based on the large corpus of text
+# Then trains a classification head ontop of this fine tuned model
+
+# eval_model_3
+# Evaluates the third model
