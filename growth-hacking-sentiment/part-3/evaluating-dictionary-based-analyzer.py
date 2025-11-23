@@ -1,3 +1,5 @@
+import csv
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
@@ -50,7 +52,7 @@ def calculate_confusion_matrix(y_true, y_pred):
 
 
 def main():
-    df = pd.read_csv(small_corpus_scored)
+    df = pd.read_csv(small_corpus_scored, quoting=csv.QUOTE_ALL, keep_default_na=False)
     add_ratings_class(df)
     add_score_class(df)
 

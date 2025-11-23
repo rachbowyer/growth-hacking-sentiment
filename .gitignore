@@ -1,9 +1,11 @@
 .DS_Store
 growth-hacking-sentiment-reference/
 growth-hacking-sentiment/.idea/
-growth-hacking-sentiment/charts/*
-growth-hacking-sentiment/data/*
 solutions/*
 .idea/
 Notes.md
 growth-hacking-sentiment/notebooks/.ipynb_checkpoints/*
+growth-hacking-sentiment/part-4/outputs
+growth-hacking-sentiment/part-4/cache_dir
+growth-hacking-sentiment/part-4/models
+growth-hacking-sentiment/part-4/runs
