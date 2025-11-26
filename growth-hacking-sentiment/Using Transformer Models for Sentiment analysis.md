@@ -12,6 +12,7 @@ Transformer models are trained using unsupervised learning with large amounts of
 ## BERT
 
 Is an open source model from Google introduced in 2018. In 2019 Google started to use it in their search engine. BERT stands for Bidirectional Encoder Representations from Transformers. It was trained on English Wikipedia and the Brown Corpus using NSP and MLM techniques. It is bidirectional in that it takes into account words before and after the word it is trying to predict.
+Developed by Google in 2018.
 
 
 ## DistilBERT
@@ -22,18 +23,26 @@ This is a smaller version of BERT. It was created by using the distillation tech
 ## RoBERTa
 
 This is a successor model to BERT, using the same architecture. It improves training by removing NSP and using different hyper parameters.
+Developed by Facebook in 2019.
+
+
+## DeBERTa
+This is a successor model to RoBERTa.
+
+
+Developed by Microsoft in 2021.
 
 
 
 ## Using transfer learning to solve NLP tasks
 
-DistilBERT provide a great based for training models to solve NLP tasks. So to measure the sentiment in a piece of text, you would add new output nodes culminating in a sigmoid or similar. Weights in the base layer are frozen. The model is then trained with examples.
+The BERT series of models provide a great based for training models to solve NLP tasks. For example, to measure the sentiment in a piece of text, you would add new classification head consisting of output layer(s) and culminating in a sigmoid or similar. The classification head is trained whilst the weights in the base model are kept frozen. Alternatively, sometimes the top layers of the base model are trained as well as the classification head.
 
 
 
 ## Fine tuning a LLM
 
-A LLM can be fine tuned to be better at working with your specieic vocabulary - e.g. a specifice domain. Here large amounts of unlabelled data are fed into the model and all the weights are adjusted.
+A LLM can also be fine tuned to be better at working with your specific vocabulary - e.g. a specific domain. Here large amounts of unlabelled data are fed into the model and all the weights are adjusted. Techniques such as MLM are used in the training.
 
 
 

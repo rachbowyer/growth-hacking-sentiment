@@ -148,9 +148,11 @@ def create_model2(train_df, use_cuda):
 
     # 'distilbert', distilbert-base-uncased
     # "roberta", "roberta-base"
+    # "roberta", "roberta-large"
+    # "debertav2", "microsoft/deberta-v3-large"
     # 'max_seq_length': 512,
     # 'sliding_window': True,n
-    model = ClassificationModel("roberta", "roberta-base",
+    model = ClassificationModel("roberta", "roberta-large",
                                 num_labels=3, use_cuda=use_cuda,
                                 args={'num_train_epochs': 1,
                                       'best_model_dir': 'models/',
@@ -309,6 +311,32 @@ def eval_model_3(test_df, use_cuda):
 #  [ 10  77 663]]
 
 
+# Roberta-large-512 sequences
+# Accuracy score: 0.77
+# Precision score: 0.77
+# Recall score: 0.77
+# F1 score: 0.76
+
+# Confusion matrix
+# [[585 128  37]
+#  [122 465 163]
+#  [  7  63 680]]
+# Train time (with GPU) - 74 secs (2500 reviews)
+# Eval time (with GPU) - 23 secs (2500 reviews)
+
+
+# big-bird-large-4096 sequences
+# Accuracy score: 0.72
+# Precision score: 0.72
+# Recall score: 0.72
+# F1 score: 0.72
+
+# Confusion matrix
+# [[603 114  33]
+#  [181 424 145]
+#  [ 24 124 602]]
+
+
 def create_reviews_as_txt_file(df, filename):
     df = list(df["reviews"])
     reviews = [r.strip() for r in df]
@@ -332,7 +360,9 @@ def main():
 
     train_df, test_df = train_test_split(small_corpus_df, test_size=0.5, random_state=RANDOM_SEED,
                                          stratify=small_corpus_df['ratings_class'])
-    
+
+    review_lengths = train_df['reviews'].str.len()
+    print(f"Review length - avg: {review_lengths.mean():.0f}, min: {review_lengths.min()}, max: {review_lengths.max()}")
 
     large_corpus_df = pd.read_csv(LARGE_CORPUS, quoting=csv.QUOTE_ALL, keep_default_na=False)
     eval_df = large_corpus_df.sample(n=100, random_state=RANDOM_SEED)
@@ -346,10 +376,10 @@ def main():
     print(f'Size of the test set: {len(test_df)}')
     print(f'Size of the eval set: {len(eval_df)}')
   
-    eval_model1(test_df, device)
+    # eval_model1(test_df, device)
 
     # create_model2(train_df, use_cuda)
-    # eval_model_2(test_df, use_cuda)
+    eval_model_2(test_df, use_cuda)
 
     # create_model3(train_df, use_cuda)
     # eval_model_3(test_df, use_cuda)
