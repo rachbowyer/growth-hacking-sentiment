@@ -101,7 +101,7 @@ The instructors' model answer used DistilBERT with a trained classification head
 
 In Part 5, the data is analysed to identify key phrases associated with positive and negative sentiment.
 
-The first step is to use the model from Part 4 to classify game reviews into 3 corpora based on sentiment: negative, neutral and positive. Then bigrams are extract from each corpus and ranked by log likelihood. This enables key phrases to be found in each corpus, hopefully allowing the identification of features of successful video games. Although many of the bigrams were generic e.g ('great', 'game,), some bigrams do identify features of games. The data tells us reliability, good graphics, compelling game play and competitive pricing are all key ingredients of a successful game.
+The first step is to use the model from Part 4 to classify game reviews into 3 corpora based on sentiment: negative, neutral and positive. Then bigrams are extract from each corpus and ranked by log likelihood. This enables key phrases to be found in each corpus, hopefully allowing the identification of features of successful video games. Although many of the bigrams were generic e.g ('great', 'game'), some bigrams do identify features of games. The data tells us reliability, good graphics, compelling game play and competitive pricing are all key ingredients of a successful game.
 
 
 ### Positive sentiment
